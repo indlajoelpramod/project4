@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE FIVE CLUES — A Survival Horror Game</title>
+    <meta name="description" content="THE FIVE CLUES — A 3D survival horror browser game. Explore an abandoned village, avoid ghosts and zombies, find five clues, and escape.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <!-- Three.js Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Screen Effect Overlays -->
+    <div id="vignette-overlay"></div>
+    <div id="damage-overlay"></div>
+    <div id="ghost-overlay"></div>
+
+    <!-- Crosshair -->
+    <div id="crosshair" class="hidden">⌖</div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div id="hud-top-left">
+            <div id="health-display">
+                <span class="hud-icon">❤️</span>
+                <span class="hud-label">BLOOD:</span>
+                <span id="health-value">500</span>
+                <span class="hud-label">/ 500</span>
+            </div>
+            <div id="stamina-container">
+                <div id="stamina-bar">
+                    <div id="stamina-fill"></div>
+                </div>
+            </div>
+        </div>
+        <div id="hud-top-right">
+            <div id="clue-display">
+                <span class="hud-icon">🔎</span>
+                <span class="hud-label">CLUES:</span>
+                <span id="clue-count">0</span>
+                <span class="hud-label">/ 5</span>
+            </div>
+            <div id="flashlight-indicator" class="hidden">
+                <span>🔦 FLASHLIGHT ON</span>
+            </div>
+        </div>
+        <div id="hud-bottom-center">
+            <div id="interaction-prompt" class="hidden"></div>
+            <div id="warning-text" class="hidden"></div>
+        </div>
+        <div id="vehicle-hud" class="hidden">
+            <div id="vehicle-speed">0 km/h</div>
+            <div id="vehicle-type">CAR</div>
+            <div id="vehicle-health">Condition: 100%</div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="hidden">
+        <span id="notification-text"></span>
+    </div>
+
+    <!-- ═══════════ INVENTORY SCREEN ═══════════ -->
+    <div id="inventory-screen" class="overlay-screen hidden">
+        <div class="overlay-content inventory-content">
+            <h2>INVENTORY</h2>
+            <div class="inventory-layout">
+                <div id="inventory-grid" class="inventory-grid">
+                    <!-- Slots dynamically populated -->
+                </div>
+                <div id="inventory-details" class="inventory-details">
+                    <!-- Item details dynamically populated -->
+                </div>
+            </div>
+            <p class="inventory-hint">Press TAB to close</p>
+        </div>
+    </div>
+
+    <!-- ═══════════ MAIN MENU ═══════════ -->
+    <div id="main-menu">
+        <div id="menu-fog-bg"></div>
+        <div id="menu-content">
+            <h1 id="game-title">THE FIVE CLUES</h1>
+            <p id="game-subtitle">An Abandoned Village Awaits</p>
+            <div id="menu-buttons">
+                <button class="menu-btn" id="btn-new-game">NEW GAME</button>
+                <button class="menu-btn" id="btn-how-to-play">HOW TO PLAY</button>
+                <button class="menu-btn" id="btn-settings">SETTINGS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ HOW TO PLAY ═══════════ -->
+    <div id="how-to-play-screen" class="overlay-screen hidden">
+        <div class="overlay-content">
+            <h2>HOW TO PLAY</h2>
+            <div class="controls-grid">
+                <div class="control-item"><kbd>W A S D</kbd><span>Move</span></div>
+                <div class="control-item"><kbd>MOUSE</kbd><span>Look Around</span></div>
+                <div class="control-item"><kbd>SHIFT</kbd><span>Sprint</span></div>
+                <div class="control-item"><kbd>SPACE</kbd><span>Jump</span></div>
+                <div class="control-item"><kbd>E</kbd><span>Interact / Search</span></div>
+                <div class="control-item"><kbd>F</kbd><span>Enter / Exit Vehicle</span></div>
+                <div class="control-item"><kbd>L</kbd><span>Flashlight</span></div>
+                <div class="control-item"><kbd>ESC</kbd><span>Pause</span></div>
+            </div>
+            <div class="objective-text">
+                <h3>OBJECTIVE</h3>
+                <p>Explore the abandoned village. Search five buildings. Find five hidden clues. Avoid the ghosts lurking inside and the zombies roaming outside. Combine all clues to form the final key. Escape through the locked door at the edge of the village.</p>
+            </div>
+            <button class="menu-btn" id="btn-back-from-help">BACK</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ SETTINGS ═══════════ -->
+    <div id="settings-screen" class="overlay-screen hidden" data-opener="main">
+        <div class="overlay-content">
+            <h2>SETTINGS</h2>
+            <div class="settings-group">
+                <label for="setting-master-volume">Master Volume</label>
+                <input type="range" id="setting-master-volume" min="0" max="100" value="80">
+            </div>
+            <div class="settings-group">
+                <label for="setting-music-volume">Music Volume</label>
+                <input type="range" id="setting-music-volume" min="0" max="100" value="60">
+            </div>
+            <div class="settings-group">
+                <label for="setting-sfx-volume">SFX Volume</label>
+                <input type="range" id="setting-sfx-volume" min="0" max="100" value="80">
+            </div>
+            <div class="settings-group">
+                <label for="setting-mouse-sensitivity">Mouse Sensitivity</label>
+                <input type="range" id="setting-mouse-sensitivity" min="1" max="100" value="50">
+            </div>
+            <div class="settings-group">
+                <label for="setting-graphics-quality">Graphics Quality</label>
+                <select id="setting-graphics-quality">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <button class="menu-btn" id="btn-back-from-settings">BACK</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ PAUSE MENU ═══════════ -->
+    <div id="pause-menu" class="overlay-screen hidden">
+        <div class="overlay-content">
+            <h2>PAUSED</h2>
+            <button class="menu-btn" id="btn-resume">RESUME</button>
+            <button class="menu-btn" id="btn-restart">RESTART</button>
+            <button class="menu-btn" id="btn-pause-settings">SETTINGS</button>
+            <button class="menu-btn" id="btn-main-menu-from-pause">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ DEATH SCREEN ═══════════ -->
+    <div id="death-screen" class="overlay-screen hidden">
+        <div class="overlay-content death-content">
+            <h1 class="death-title">YOU DIED</h1>
+            <button class="menu-btn" id="btn-death-restart">RESTART</button>
+            <button class="menu-btn" id="btn-death-menu">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ ENDING SCREEN ═══════════ -->
+    <div id="ending-screen" class="overlay-screen hidden">
+        <div class="overlay-content ending-content">
+            <h1 class="ending-title">YOU ESCAPED</h1>
+            <h2 class="ending-subtitle">THE END</h2>
+            <button class="menu-btn" id="btn-play-again">PLAY AGAIN</button>
+            <button class="menu-btn" id="btn-ending-menu">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ DEBUG OVERLAY ═══════════ -->
+    <div id="debug-overlay" class="hidden">
+        <div id="debug-fps">FPS: 0</div>
+        <div id="debug-position">Pos: 0, 0, 0</div>
+        <div id="debug-state">State: MAIN_MENU</div>
+        <div id="debug-zombies">Zombies: 0</div>
+        <div id="debug-ghost">Ghost: IDLE</div>
+        <div id="debug-clues">Clue Locations: -</div>
+    </div>
+
+    <!-- ═══════════ CLICK-TO-START PROMPT ═══════════ -->
+    <div id="click-to-start" class="hidden">
+        <p>CLICK TO LOOK AROUND</p>
+    </div>
+
+    <!-- ═══════════ MOBILE CONTROLS ═══════════ -->
+    <div id="mobile-controls">
+        <!-- D-Pad -->
+        <div class="d-pad">
+            <button id="btn-up" class="d-btn">▲</button>
+            <button id="btn-left" class="d-btn">◀</button>
+            <button id="btn-right" class="d-btn">▶</button>
+            <button id="btn-down" class="d-btn">▼</button>
+        </div>
+        <!-- Action Buttons -->
+        <div class="action-pad">
+            <button id="btn-interact" class="act-btn">E</button>
+            <button id="btn-jump" class="act-btn">UP</button>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
